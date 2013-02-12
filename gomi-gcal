@@ -1,0 +1,124 @@
+#!/usr/bin/php
+<?php
+/**
+ * gomi-gcal
+ * Googleカレンダーからゴミの日情報を取得し、それをテキスト形式で出力します。
+ * 発声を目的としているため、数字は漢字に変換しており、見やすさ重視ではありません。
+ * 
+ * @package		Gomi-Gcal
+ * @author		松井 健太郎 (Kentaro Matsui) <info@ke-tai.org>
+ * @copyright	ke-tai.org
+ * @license		BSD
+ */
+
+$gg = new Gomi_Gcal();
+$gg->run();
+
+
+/**
+ * Gomi_Gcalクラス
+ */
+class Gomi_Gcal
+{
+	/**
+	 * 出力内容定義
+	 */
+	protected $message = '%DATE%は、%GOMI%です。';
+	protected $today = '今日';
+	protected $tomorrow = '明日';
+	protected $repeat_num = 1;
+	protected $border_time = 11;
+
+	/**
+	 * 対象カレンダー定義
+	 */
+	protected $calendar = array(
+		// 札幌市豊平区(1)ゴミの日カレンダー
+		// @link https://sites.google.com/site/icantlivewithoutit/posts/sapporo-gominohi-2013
+		'userid' => 'rg5jvdrpnt6ovgpnf8offkpag4%40group.calendar.google.com',
+		'magiccookie' => 'public'
+	);
+
+	/**
+	 * コンストラクタ
+	 * @param array $config 設定を格納した連想配列
+	 */
+	public function __construct($config = array())
+	{
+		// configで指定された設定でクラス変数を上書き
+		foreach ($config as $key => $val) {
+			$this->$key = $val;
+		}
+	}
+
+	/**
+	 * 実行
+	 */
+	public function run()
+	{
+		// 日付範囲を決定
+		if ($this->border_time > date('H')) {
+			// 基準時間より前の場合は今日の予定を使用
+			$date_str = date('Y-m-d');
+			$msg_date = $this->today;
+		} else {
+			// 基準時間より後の場合は明日の予定を使用
+			$date_str = date('Y-m-d', time() + 24 * 60 * 60);
+			$msg_date = $this->tomorrow;
+		}
+
+		// スケジュールを取得して、それを出力
+		$gomi = $this->getSchedule($date_str);
+		if ('' != $gomi) {
+			$msg = strtr($this->message, array(
+				'%DATE%' => $msg_date,
+				'%GOMI%' => $gomi,
+			));
+			for ($i = 0; $i < $this->repeat_num; $i++) {
+				echo $msg . "\n";
+			}
+		}
+	}
+
+	/**
+	 * Googleカレンダー情報取得
+	 * GoogleカレンダーのAPIにアクセスし、その情報を整形して返す
+	 * @param string $date_str 取得日(Y-m-d形式)
+	 * @return string テキスト形式になった全てのカレンダー情報
+	 */
+	protected function getSchedule($date_str)
+	{
+		$url = 'http://www.google.com/calendar/feeds/'
+			. $this->calendar['userid']
+			. '/' . $this->calendar['magiccookie']
+			. '/full?'
+			. 'start-min=' . $date_str . 'T00:00:00'
+			. '&start-max=' . $date_str . 'T23:59:59'
+			. '&orderby=starttime&sortorder=a&singleevents=true';
+		$xml = simplexml_load_file($url);
+
+		// テキスト形式にして格納
+		$msg = $this->xml2Text($xml);
+
+		return $msg;
+	}
+
+	/**
+	 * XML形式->Text変換
+	 * Googleカレンダーから取得したXMLをテキスト形式に変換して返す
+	 * @param object $xml Googleカレンダーから取得したXMLオブジェクト
+	 * @return string テキスト形式に変換されたカレンダー情報
+	 */
+	protected function xml2Text($xml)
+	{
+		$msg = '';
+
+		// 予定の数だけ繰り返し
+		foreach ($xml->entry as $item) {
+			$msg .= $item->title . " ";
+		}
+
+		return $msg;
+	}
+}
+
