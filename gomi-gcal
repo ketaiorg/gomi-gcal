@@ -115,7 +115,7 @@ class Gomi_Gcal
 
 		// 予定の数だけ繰り返し
 		foreach ($xml->entry as $item) {
-			$msg .= $item->title . " ";
+			$msg .= $item->title;
 		}
 
 		return $msg;
