@@ -23,7 +23,7 @@ class Gomi_Gcal
 	/**
 	 * 出力内容定義
 	 */
-	protected $message = '%DATE%は、%GOMI%の日です。';
+	protected $message = '%DATE%は、%GOMI%の日です。%DATE%は、%GOMI%の日です。';
 	protected $today = '今日';
 	protected $tomorrow = '明日';
 	protected $repeat_num = 1;
