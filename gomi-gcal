@@ -91,7 +91,7 @@ class Gomi_Gcal
 		$url = 'http://www.google.com/calendar/feeds/'
 			. $this->calendar['userid']
 			. '/' . $this->calendar['magiccookie']
-			. '/full?'
+			. '/basic?'
 			. 'start-min=' . $date_str . 'T00:00:00'
 			. '&start-max=' . $date_str . 'T23:59:59'
 			. '&orderby=starttime&sortorder=a&singleevents=true';
